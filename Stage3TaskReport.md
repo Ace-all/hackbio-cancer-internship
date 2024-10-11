@@ -25,7 +25,7 @@ We utilized the TCGAbiolinks R package (Colaprico et al., 2016) to download RNA-
 Differential expression analysis was performed using DESeq2, comparing primary tumor samples to solid tissue normal samples. Genes with an adjusted p-value < 0.05 and absolute log2 fold change > 1 were considered significantly differentially expressed.
 
 
-![image](https://github.com/user-attachments/assets/afc18920-e3ff-4da3-8c9c-cdb8c71ec567)
+![title](Images/main.png)
 
 Fig 1: Volcano plot
 
@@ -57,8 +57,7 @@ Functional enrichment analysis revealed several significantly enriched GO terms 
 
 -
 
-![image](https://github.com/user-attachments/assets/195eb306-dda3-42cc-965f-9c7d8d2213b7)
-
+![title](Images/curve.png)
 
 Fig 2: ROC curve analysis for the TCGA-BRCA dataset.
 
@@ -70,7 +69,7 @@ Our Random Forest classifier achieved an accuracy of 0.92 to 2 d.p in distinguis
 
 
 
-![image](https://github.com/user-attachments/assets/1ed0d309-964f-47e1-8b5e-2173c3d40ad9)
+![title](Images/plot.png)
 
 
 Fig 3: Feature importance plot.
@@ -82,7 +81,7 @@ The top features (genes) contributing to the classification, as determined by th
  
 
  
-![image](https://github.com/user-attachments/assets/a76be5d0-7a11-452d-a243-99f2edc3f4f6)
+![title](Images/matrix.png)
 
 
 Fig 4: Confusion matrix for the TCGA-BRCA.
