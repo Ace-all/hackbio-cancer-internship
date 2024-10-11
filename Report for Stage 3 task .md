@@ -24,33 +24,9 @@ We utilized the TCGAbiolinks R package (Colaprico et al., 2016) to download RNA-
 
 Differential expression analysis was performed using DESeq2, comparing primary tumor samples to solid tissue normal samples. Genes with an adjusted p-value < 0.05 and absolute log2 fold change > 1 were considered significantly differentially expressed.
 
-<!--[if gte vml 1]><v:shapetype id="_x0000_t75" coordsize="21600,21600"
- o:spt="75" o:preferrelative="t" path="m@4@5l@4@11@9@11@9@5xe" filled="f"
- stroked="f">
- <v:stroke joinstyle="miter"/>
- <v:formulas>
-  <v:f eqn="if lineDrawn pixelLineWidth 0"/>
-  <v:f eqn="sum @0 1 0"/>
-  <v:f eqn="sum 0 0 @1"/>
-  <v:f eqn="prod @2 1 2"/>
-  <v:f eqn="prod @3 21600 pixelWidth"/>
-  <v:f eqn="prod @3 21600 pixelHeight"/>
-  <v:f eqn="sum @0 0 1"/>
-  <v:f eqn="prod @6 1 2"/>
-  <v:f eqn="prod @7 21600 pixelWidth"/>
-  <v:f eqn="sum @8 21600 0"/>
-  <v:f eqn="prod @7 21600 pixelHeight"/>
-  <v:f eqn="sum @10 21600 0"/>
- </v:formulas>
- <v:path o:extrusionok="f" gradientshapeok="t" o:connecttype="rect"/>
- <o:lock v:ext="edit" aspectratio="t"/>
-</v:shapetype><v:shape id="Picture_x0020_8" o:spid="_x0000_i1028" type="#_x0000_t75"
- style='width:355.5pt;height:216.5pt;visibility:visible;mso-wrap-style:square'>
- <v:imagedata src="file:///C:/Users/m/AppData/Local/Temp/msohtmlclip1/01/clip_image001.png"
-  o:title=""/>
-</v:shape><![endif]--><!--[if !vml]-->![](file:///C:/Users/m/AppData/Local/Temp/msohtmlclip1/01/clip_image002.png)<!--[endif]-->
 
 Fig 1: Volcano plot
+
 
  
 
@@ -76,12 +52,7 @@ Functional enrichment analysis revealed several significantly enriched GO terms 
 
  
 
-<!--[if gte vml 1]><v:shape id="Picture_x0020_5" o:spid="_x0000_i1027"
- type="#_x0000_t75" style='width:355.5pt;height:216.5pt;visibility:visible;
- mso-wrap-style:square'>
- <v:imagedata src="file:///C:/Users/m/AppData/Local/Temp/msohtmlclip1/01/clip_image003.png"
-  o:title=""/>
-</v:shape><![endif]--><!--[if !vml]-->![](file:///C:/Users/m/AppData/Local/Temp/msohtmlclip1/01/clip_image004.png)<!--[endif]-->
+-
 
 Fig 2: ROC curve analysis for the TCGA-BRCA dataset.
 
@@ -91,12 +62,7 @@ Our Random Forest classifier achieved an accuracy of 0.92 to 2 d.p in distinguis
 
  
 
-<!--[if gte vml 1]><v:shape id="Picture_x0020_6" o:spid="_x0000_i1026"
- type="#_x0000_t75" style='width:355.5pt;height:216.5pt;visibility:visible;
- mso-wrap-style:square'>
- <v:imagedata src="file:///C:/Users/m/AppData/Local/Temp/msohtmlclip1/01/clip_image005.png"
-  o:title=""/>
-</v:shape><![endif]--><!--[if !vml]-->![](file:///C:/Users/m/AppData/Local/Temp/msohtmlclip1/01/clip_image006.png)<!--[endif]-->
+
 
 Fig 3: Feature importance plot.
 
@@ -108,12 +74,6 @@ The top features (genes) contributing to the classification, as determined by th
 
  
 
-<!--[if gte vml 1]><v:shape id="Picture_x0020_7" o:spid="_x0000_i1025"
- type="#_x0000_t75" style='width:355.5pt;height:216.5pt;visibility:visible;
- mso-wrap-style:square'>
- <v:imagedata src="file:///C:/Users/m/AppData/Local/Temp/msohtmlclip1/01/clip_image007.png"
-  o:title=""/>
-</v:shape><![endif]--><!--[if !vml]-->![](file:///C:/Users/m/AppData/Local/Temp/msohtmlclip1/01/clip_image008.png)<!--[endif]-->
 
 Fig 4: Confusion matrix for the TCGA-BRCA.
 
