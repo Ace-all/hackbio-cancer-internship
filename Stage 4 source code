@@ -1,0 +1,265 @@
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(c("TCGAbiolinks", "SummarizedExperiment", "edgeR", "limma", "caret", "randomForest"))
+
+library(TCGAbiolinks)
+library(SummarizedExperiment)
+library(edgeR)
+library(limma)
+library(caret)
+library(randomForest)
+
+# Obtain the LGG dataset
+query <- GDCquery(project = "TCGA-LGG",
+                  data.category = "Transcriptome Profiling",
+                  data.type = "Gene Expression Quantification",
+                  workflow.type = "STAR - Counts",
+                  experimental.strategy = "RNA-Seq")
+
+GDCdownload(query)
+data <- GDCprepare(query)
+idh_status <- merge(data$paper_IDH.status,data$bcr_patient_barcode)
+
+
+# Print the first few rows of idh_status to verify
+print(head(idh_status))
+# Extract gene expression matrix and clinical data
+expr_data <- assay(data)
+coldata <- as.data.frame(data@colData@listData[["paper_IDH.status"]])
+rownames(coldata) <- data@colData@listData$barcode
+names(coldata)[1] <-"idh_status"
+
+gene_info <- rowData(data)
+library(org.Hs.eg.db)
+
+# Convert Ensembl IDs to gene symbols
+ensembl_ids <- rownames(expr_data)
+
+# Remove version numbers for compatibility
+ensembl_ids <- sub("\\..*", "", ensembl_ids)
+
+# Map IDs
+gene_symbols <- mapIds(org.Hs.eg.db, keys = ensembl_ids, column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+
+# Remove NA values and keep only mapped genes
+mapped_genes <- !is.na(gene_symbols)
+expr_data <- expr_data[mapped_genes, ]
+gene_symbols <- gene_symbols[mapped_genes]
+
+# Assign gene symbols to expression data
+rownames(expr_data) <- gene_symbols
+coldata <- na.omit(coldata)
+expr_data <- expr_data[,rownames(coldata)]
+
+# making the rownames and column names identical
+all(rownames(coldata) %in% colnames(expr_data))
+all(rownames(coldata) == colnames(expr_data))
+
+expr_LGG <- round(expr_data)
+
+# Create DESeqDataSet object
+dds <- DESeqDataSetFromMatrix(countData = expr_LGG,
+                              colData = coldata,
+                              design = ~ idh_status)
+# Filter out low count genes
+keep <- rowSums(counts(dds)) >= 10
+dds <- dds[keep,]
+
+# Set the reference level for the factor of interest
+dds$idh_status <- relevel(dds$idh_status, ref = "WT")
+
+# Run DESeq2 analysis
+dds <- DESeq(dds)
+
+# Extract results
+res <- results(dds)
+
+# Explore results
+summary(res)
+
+# Filter significant genes
+sig_genes <- subset(res, padj < 0.05 & abs(log2FoldChange) > 2)
+summary(sig_genes)
+# Visualize results
+plotMA(res, ylim=c(-5,5))
+
+# For Machine Learning
+# Load required libraries
+library(randomForest)
+library(caret)
+library(pROC)
+library(ggplot2)
+library(dplyr)
+
+# Data Preparation
+# Use normalized counts
+expr_matrix <- t(counts(dds, normalized=TRUE))
+expr_df <- as.data.frame(expr_matrix)
+
+# Add IDH status and ensure it's a proper factor
+expr_df$idh_status <- factor(coldata$idh_status, 
+                             levels = unique(coldata$idh_status))
+
+# Print class levels to verify
+print("Class levels:")
+print(levels(expr_df$idh_status))
+
+# Use significant genes from DESeq2 analysis
+significant_genes <- rownames(sig_genes)
+selected_features <- expr_df[, c(significant_genes, "idh_status")]
+
+# Additional Feature Selection using Recursive Feature Elimination (RFE)
+set.seed(123) # for reproducibility
+
+# Define control parameters for RFE
+ctrlf <- rfeControl(functions = rfFuncs,
+                   method = "cv",
+                   number = 5)
+
+# Perform RFE
+rfe_result <- rfe(selected_features[, !colnames(selected_features) %in% "idh_status"],
+                  selected_features$idh_status,
+                  sizes = c(5, 10, 15, 20, 25),
+                  rfeControl = ctrlf)
+
+print("Top features selected by RFE:")
+print(predictors(rfe_result))
+
+# Prepare final dataset with selected features
+final_features <- predictors(rfe_result)[1:10] # Take top 10 features
+final_data <- selected_features[, c(final_features, "idh_status")]
+
+# Split data into training and testing sets
+set.seed(123)
+train_index <- createDataPartition(final_data$idh_status, p = 0.7, list = FALSE)
+train_data <- selected_features[train_index, ]
+test_data <- selected_features[-train_index, ]
+
+# Set up cross-validation with modified control parameters
+ctrl <- trainControl(
+  method = "cv",
+  number = 5,
+  classProbs = TRUE,
+  summaryFunction = defaultSummary,  # Changed from twoClassSummary
+  search = "grid"
+)
+
+# Create parameter grid for tuning
+n_features <- length(significant_genes)
+grid <- expand.grid(mtry = c(floor(sqrt(n_features)), 
+                             floor(n_features/3), 
+                             floor(n_features/2)))
+
+# Train Random Forest model
+print("Training Random Forest model...")
+rf_model <- train(
+  x = train_data[, significant_genes],  # Separate predictors
+  y = train_data$idh_status,            # Separate response
+  method = "rf",
+  trControl = ctrl,
+  tuneGrid = grid,
+  metric = "Accuracy",  # Changed from ROC
+  importance = TRUE,
+  ntree = 500
+)
+
+print("Random Forest Model Results:")
+print(rf_model)
+
+# Train KNN model with parameter tuning
+knn_model <- train(idh_status ~ .,
+                   data = train_data,
+                   method = "knn",
+                   trControl = ctrl_knn,
+                   metric = "ROC",
+                   tuneLength = 10)
+
+print("KNN model results:")
+print(knn_model)
+
+# Make predictions on test set
+predictions <- predict(rf_model, newdata = test_data[, significant_genes])
+pred_probs <- predict(rf_model, newdata = test_data[, significant_genes], type = "prob")
+
+# Calculate performance metrics
+conf_matrix <- confusionMatrix(predictions, test_data$idh_status)
+
+
+
+# Calculate ROC curve
+pred_probs <- predict(knn_model, newdata = test_data, type = "prob")
+roc_obj <- roc(test_data$idh_status, pred_probs[, "Mutant"])
+
+# Plot ROC curve
+pdf("roc_curve.pdf")
+plot(roc_obj, main = "ROC Curve for KNN Classification")
+dev.off()
+
+# Create comparative performance plot
+model_comparison <- data.frame(
+  Metric = c("Accuracy", "Sensitivity", "Specificity"),
+  KNN = c(0.9684, 0.5462, 1.0000),
+  RandomForest = c(0.9869, 0.9286, 1.0000)
+)
+
+ggplot(model_comparison %>% gather(Model, Value, -Metric),
+       aes(x = Metric, y = Value, fill = Model)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_minimal() +
+  labs(title = "Model Performance Comparison",
+       y = "Score",
+       x = "Metric") +
+  scale_fill_brewer(palette = "Set2")
+
+
+# Print performance metrics
+print("Confusion Matrix and Statistics:")
+print(conf_matrix)
+
+print("AUC-ROC:")
+print(auc(roc_obj))
+
+# Feature importance visualization
+feature_importance <- data.frame(
+  Feature = final_features,
+  Expression_Diff = abs(sig_genes[final_features, "log2FoldChange"])
+)
+
+ggplot(feature_importance, aes(x = reorder(Feature, Expression_Diff), y = Expression_Diff)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "Feature Importance",
+       x = "Genes",
+       y = "Absolute Log2 Fold Change")
+ggsave("feature_importance.pdf")
+
+# Print performance metrics
+print("Model Performance Metrics:")
+print("-------------------------")
+print("Confusion Matrix and Statistics:")
+print(conf_matrix)
+
+# Cross-validation results
+print("\nCross-validation Results:")
+print(rf_model$results)
+
+# Save predictions and probabilities
+results_df <- data.frame(
+  True_Class = test_data$idh_status,
+  Predicted_Class = predictions
+)
+
+# Add probability columns if they exist
+if(is.data.frame(pred_probs)) {
+  results_df <- cbind(results_df, pred_probs)
+}
+
+write.csv(results_df, "rf_predictions.csv", row.names = FALSE)
+
+# Calculate class-specific performance metrics
+print("\nDetailed Performance Metrics:")
+print(conf_matrix$byClass)
+
+# Save model
+saveRDS(rf_model, "rf_model.rds")
