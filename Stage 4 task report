@@ -1,0 +1,128 @@
+**Stage 4 task**
+
+**Contributor: amakamadubuike <2023@gmail.com>, SlackID: Ace\_well**
+
+**Analysis of IDH Status Classification in Lower Grade Gliomas: A Machine Learning Approach.**
+
+ **Introduction**
+
+Lower-grade gliomas (LGG) represent a significant challenge in neuro-oncology, with IDH (isocitrate dehydrogenase) mutation status serving as a crucial molecular marker for prognosis and treatment strategies. IDH mutations are associated with better survival outcomes and increased treatment sensitivity, making their identification essential for clinical decision-making. This molecular classification has revolutionised our understanding of glioma biology and has become a cornerstone of the WHO classification of central nervous system tumours.****
+
+** **
+
+**Dataset and Preprocessing**
+
+Our analysis utilized RNA-seq data from the TCGA-LGG project, comprising transcriptome profiles from lower-grade glioma patients. The dataset included:
+
+\- Gene expression quantification data (STAR-Counts workflow)
+
+\- IDH mutation status for each sample
+
+\- 360 total samples with comprehensive molecular profiling
+
+ 
+
+Preprocessing steps included:
+
+\- Normalization of gene expression counts
+
+\- Filtering of low-expression genes
+
+\- Conversion of Ensembl IDs to gene symbols
+
+\- Selection of significantly differentially expressed genes (padj < 0.05, |log2FC| > 2)
+
+ 
+
+**Methodology**
+
+We implemented two machine learning approaches:
+
+1\. k-Nearest Neighbors (KNN)
+
+   - Cross-validation (5-fold)
+
+   - Parameter tuning for k (5-23)
+
+   - ROC optimization
+
+  
+
+2\. Random Forest Classification
+
+   - 500 trees
+
+   - mtry parameter optimization
+
+   - Feature importance analysis
+
+ 
+
+**Results**
+
+Both models demonstrated exceptional performance in IDH status classification:
+
+ 
+
+KNN Performance:
+
+\- Best k value: 21
+
+\- ROC: 0.9684
+
+\- Specificity: 1.0000
+
+\- Sensitivity: 0.5462
+
+\- Notable trade-off between sensitivity and specificity
+
+ 
+
+Random Forest Performance:
+
+\- Accuracy: 0.9869 (95% CI: 0.9536-0.9984)
+
+\- AUC: 0.9911
+
+\- Sensitivity: 0.9286
+
+\- Specificity: 1.0000
+
+\- Optimal mtry: 341
+
+ 
+
+The Random Forest model performed superior, particularly in balancing sensitivity and specificity. The confusion matrix revealed only 2 false negatives out of 153 samples, demonstrating robust classification capability.
+
+ 
+
+**Comparison and Future Directions**
+
+Our findings align with recent studies on glioma molecular classification by Ceccarelli et al.(2016), showing that transcriptome-based classification can accurately predict IDH status with 98.69% accuracy. However, research suggests potential subtypes within IDH-mutant and IDH-wildtype groups. Future analyses may benefit from:
+
+\- Integrating methylation data
+
+\- Considering additional markers like 1p/19q codeletion
+
+\- Using more detailed classification schemes
+
+
+**Conclusion**
+
+This analysis highlights the effectiveness of Random Forest in classifying IDH status in lower-grade gliomas. Its high accuracy and specificity show potential as a complementary diagnostic tool. The algorithm's superior performance over KNN underscores the value of ensemble methods in handling complex molecular data, reinforcing the role of molecular classification in glioma diagnostics and the promise of machine learning in precision oncology.
+
+ 
+
+ **References**
+
+Breiman L. (2001). "Random Forests." Machine Learning, 45:5-32.
+
+Ceccarelli M, et al. (2016). "Molecular Profiling Reveals Biologically Discrete Subsets and Pathways of Progression in Diffuse Glioma." Cell, 164(3):550-563.
+
+Capper D, et al. (2018). "DNA methylation-based classification of central nervous system tumours." Nature, 555:469-474.
+
+Love MI, et al. (2014). "Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2." Genome Biology, 15:550.
+
+Louis DN, et al. (2021). "The 2021 WHO Classification of Tumors of the Central Nervous System." Neuro Oncol, 23(8):1231-1251.
+
+Yan H, et al. (2009). "IDH1 and IDH2 Mutations in Gliomas." N Engl J Med, 360(8):765-773.
